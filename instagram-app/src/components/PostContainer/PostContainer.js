@@ -3,71 +3,70 @@ import pt from "prop-types";
 import uuidv4 from "uuid/v4";
 import moment from "moment";
 import faker from "faker";
-import styled from 'styled-components';
+import styled from "styled-components";
 import { IoIosHeartEmpty } from "react-icons/io";
 import { FaRegComment } from "react-icons/fa";
 import CommentSection from "../CommentSection/CommentSection";
 import Form from "../Form/Form";
 
-
-const PostContainerStyle  = styled.section`
-${props => (props.display === "on" ? `display: flex;` : `display: none;`)};
-    flex-direction: column;
-    width: 50%;
-    margin: 5rem auto;
-    border: 1px solid lightgray;
-    overflow: hidden;
+const PostContainerStyle = styled.section`
+  ${props => (props.display === "on" ? `display: flex;` : `display: none;`)};
+  flex-direction: column;
+  width: 50%;
+  margin: 5rem auto;
+  border: 1px solid lightgray;
+  overflow: hidden;
 `;
 
 const UserThumbnail = styled.img`
-border-radius: 50%;
+  border-radius: 50%;
   height: 2rem;
   padding: 1rem;
 `;
 const UserDeets = styled.div`
-width: 100%;
+  width: 100%;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   vertical-align: middle;
-  border: .5px solid lightgrey;
-  border-radius: .2rem;
+  border: 0.5px solid lightgrey;
+  border-radius: 0.2rem;
   font-weight: bold;
 `;
 
 const UserPostArea = styled.div`
- width: 100%;
+  width: 100%;
 `;
 
 const PostImage = styled.img`
-width: 100%;
-    height: 100%;
-    margin-bottom: 0;
-    overflow: hidden;
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
+  overflow: hidden;
 `;
 
 const Reaction = styled.section`
-display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    font-weight: bold;
-    padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  font-weight: bold;
+  padding: 1rem;
 `;
 
 const PostIcons = styled.div`
-font-size: 1.5rem;
+  font-size: 1.5rem;
 `;
 
 const TimeStamp = styled.div`
-display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    color: gray;
-    margin: 0 .5rem;
-    padding: 1rem;
-    border-bottom: 1px solid lightgrey;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  color: gray;
+  margin: 0 0.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid lightgrey;
 `;
 
 const PostContainer = ({ props }) => {
@@ -79,7 +78,8 @@ const PostContainer = ({ props }) => {
     timestamp,
     likes,
     username,
-    show
+    show,
+    liked
   } = props;
   const commentDate = timestamp.replace(/th/, "");
   const [inputValue, setInputValue] = useState("");
@@ -89,19 +89,25 @@ const PostContainer = ({ props }) => {
   );
 
   const [addLikes, updateLikes] = useState(likes);
-  
-  useEffect(()=>{
+
+  const [LikeStatus, setLikeStatus] = useState(liked);
+
+  useEffect(() => {
     const post = JSON.parse(localStorage.getItem("posts"));
-    const postUpdate = post.map((userPost) => {
-      if(postId === userPost.postId) {
+    const postUpdate = post.map(userPost => {
+      if (postId === userPost.postId) {
         return {
-          ...userPost, comments: inputComment, timestamp: `${moment(new Date(), "MMM D LTS")}`, likes: addLikes
-        }
+          ...userPost,
+          comments: inputComment,
+          timestamp: `${moment(new Date(), "MMM D LTS")}`,
+          likes: addLikes,
+          liked: LikeStatus
+        };
       }
       return userPost;
     });
     localStorage.setItem("posts", JSON.stringify(postUpdate));
-  },[inputComment, postId, createdAt, addLikes])
+  }, [inputComment, postId, createdAt, addLikes, LikeStatus]);
 
   const handleChange = e => {
     setInputValue(e.target.value);
@@ -118,11 +124,15 @@ const PostContainer = ({ props }) => {
     setInputValue("");
     setCreatedAt(moment(new Date(), "MMM D LTS").fromNow());
   };
-  const handleLikes = () => {
-    let newLike = likes;
-    updateLikes(newLike + 1);
+  const handleLikes = async () => {
+    if (!LikeStatus) {
+      setLikeStatus(true);
+      updateLikes(likes => (likes += 1));
+    } else if (LikeStatus) {
+      setLikeStatus(false);
+      updateLikes(likes => (likes -= 1));
+    }
   };
-  
 
   return (
     <PostContainerStyle display={show}>
@@ -135,7 +145,10 @@ const PostContainer = ({ props }) => {
       </UserPostArea>
       <Reaction>
         <PostIcons>
-          <span onClick={handleLikes}>
+          <span
+            onClick={() => handleLikes()}
+            style={{ color: LikeStatus ? "red" : "" }}
+          >
             <IoIosHeartEmpty />
           </span>
 
